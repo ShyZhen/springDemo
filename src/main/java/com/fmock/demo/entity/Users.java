@@ -1,6 +1,9 @@
 package com.fmock.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * @Author zhenhuaixiu
@@ -16,4 +19,7 @@ public class Users {
     private String email;
 
     private String phone;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
 }

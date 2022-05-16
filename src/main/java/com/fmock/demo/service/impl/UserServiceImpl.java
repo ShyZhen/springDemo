@@ -5,6 +5,7 @@ import com.fmock.demo.dto.UserSimpleInfoDto;
 import com.fmock.demo.service.IUserService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class UserServiceImpl implements IUserService {
         userAllInfoDto.setName("模拟用户"+userId);
         userAllInfoDto.setEmail("user-"+userId+"@email.com");
         userAllInfoDto.setPhone("11111111111");
+        userAllInfoDto.setCreatedAt(LocalDateTime.now());
 
         List<UserAllInfoDto> list = new ArrayList<>();
         list.add(userAllInfoDto);

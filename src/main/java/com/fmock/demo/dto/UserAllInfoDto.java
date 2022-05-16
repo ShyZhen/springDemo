@@ -1,6 +1,9 @@
 package com.fmock.demo.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * @Author zhenhuaixiu
@@ -16,4 +19,8 @@ public class UserAllInfoDto {
     private String email;
 
     private String phone;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    //@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    private LocalDateTime createdAt;
 }
