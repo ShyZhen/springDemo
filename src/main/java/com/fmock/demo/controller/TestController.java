@@ -1,11 +1,22 @@
 package com.fmock.demo.controller;
 
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Convert;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import java.math.BigInteger;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -117,10 +128,116 @@ public class TestController {
      * 相同的输入一定得到相同的输出
      * 不同的输入大概率得到不同的输出
      * 验证原始数据是否被篡改
+     *
+     * 两个相同的字符串永远会计算出相同的hashCode。所以当我们自定义一个class时，如果覆写equals()方法时必须正确覆写hashCode()方法
+     * 哈希碰撞（冲突）是不可避免的，因为输出字节长度固定。哈希算法是把一个无限的输入集合映射到一个有限的输出集合，必然会产生碰撞。
      */
     @Test
     public void hashTest() {
+        System.out.println("Hello".hashCode());  // 69609650
+        System.out.println("HELLO".hashCode());  // 68624562
+        System.out.println("World".hashCode());  // 83766130
 
+        // 以MD5为例
+        try {
+            String s = "a";
+            MessageDigest md = MessageDigest.getInstance("MD5");
+//            MessageDigest md = MessageDigest.getInstance("SHA-1");
+//            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(s.getBytes(StandardCharsets.UTF_8));
+            byte[] result = md.digest();
+            System.out.println(Arrays.toString(result));
+
+            // byte[]转十六进制字符串
+            String ss1 = new BigInteger(1, result).toString(16);
+
+            // 该方法可能遇到位数不够需要补零的问题，0开头的会被省略,需要按照位数补零
+            //System.out.println(String.format("%032x", new BigInteger(ss1, 16)));
+
+
+
+
+            // byte[]转十六进制字符串
+            StringBuilder sb = new StringBuilder();
+            String temp = null;
+            for (byte b: result) {
+                temp = Integer.toHexString(b & 0xFF);  // https://www.cnblogs.com/xbj-2016/p/6825095.html
+                if (temp.length() == 1) {
+                    sb.append(0);
+                }
+                sb.append(temp);
+            }
+            String ss2 = sb.toString();
+
+            // 输出两种方式生成的md5字符串
+            System.out.println(ss1);
+            System.out.println(ss2);
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    /**
+     * 引入本地jar包  https://learnku.com/articles/55327
+     * 1.在src/main/resources下创建lib文件夹，将jar包存放于此
+     * 2.pom.xml添加自定义依赖
+     * 3.pom.xml添加打包插件并设置includeSystemScope
+     */
+    @Test
+    public void jarTest() {
+        Security.addProvider(new BouncyCastlePQCProvider());
+    }
+
+    /**
+     * Hmac算法总是和某种哈希算法配合起来用的。例如，我们使用MD5算法，对应的就是HmacMD5算法，它相当于“加盐”的MD5
+     * Hmac本质上就是把key混入摘要的算法。验证此哈希时，除了原始的输入数据，还要提供key。
+     */
+    @Test
+    public void hmacTest() throws NoSuchAlgorithmException, InvalidKeyException {
+        KeyGenerator keyGen1 = KeyGenerator.getInstance("HmacMD5");
+        KeyGenerator keyGen2 = KeyGenerator.getInstance("HmacSHA1");
+        KeyGenerator keyGen3 = KeyGenerator.getInstance("HmacSHA256");
+
+        SecretKey skey1 = keyGen1.generateKey();
+        SecretKey skey2 = keyGen2.generateKey();
+        SecretKey skey3 = keyGen3.generateKey();
+
+        byte[] b1 = skey1.getEncoded();
+        byte[] b2 = skey2.getEncoded();
+        byte[] b3 = skey3.getEncoded();
+
+        // 打印随机生成的key byte[]格式
+        // System.out.println(Arrays.toString(b1));
+        // System.out.println(Arrays.toString(b2));
+        // System.out.println(Arrays.toString(b3));
+
+        // 打印随机生成的key 转换十六进制字符串
+        System.out.println(this.handleToExString(b1));
+        System.out.println(this.handleToExString(b2));
+        System.out.println(this.handleToExString(b3));
+
+        Mac mac = Mac.getInstance("HmacMD5");
+        mac.init(skey1);
+        mac.update("a".getBytes(StandardCharsets.UTF_8));
+        byte[] result = mac.doFinal();
+        System.out.println(this.handleToExString(result));
+    }
+
+    // byte[]转换为十六进制字符串
+    private String handleToExString(byte[] result) {
+
+        // byte[]转十六进制字符串
+        StringBuilder sb = new StringBuilder();
+        String temp = null;
+        for (byte b: result) {
+            temp = Integer.toHexString(b & 0xFF);  // https://www.cnblogs.com/xbj-2016/p/6825095.html
+            if (temp.length() == 1) {
+                sb.append(0);
+            }
+            sb.append(temp);
+        }
+        return sb.toString();
     }
 
 }
