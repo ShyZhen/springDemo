@@ -147,7 +147,31 @@ public class ThreadController {
         t1.start();
         t1.join();
 
+        // 中断线程
+        t1.interrupt();
+
         System.out.println("test4");
+    }
+
+    @Test
+    public void test5() throws InterruptedException {
+        Thread t1 = new MyThread2();
+        t1.start();
+
+        Thread.sleep(2000);  // 当前线程睡眠时间越长，打印出的t1.run()越多，睡眠之后才中断
+        t1.interrupt();  // 中断t线程
+        t1.join();       // 等待t线程结束
+        System.out.println("test5 end");
+    }
+    @Test
+    public void test6() throws InterruptedException {
+        Thread t1 = new MyThread3();
+        t1.start();
+
+        Thread.sleep(2000);  // 当前线程睡眠时间越长，打印出的t1.run()越多，睡眠之后才中断
+        t1.interrupt();  // 中断t线程
+        t1.join();       // 等待t线程结束
+        System.out.println("test5 end");
     }
 }
 
@@ -170,5 +194,57 @@ class MyRunnable implements Runnable {
     @Override
     public void run() {
         System.out.println("方法二，start a new thread");
+    }
+}
+
+
+
+// interrupt 线程中断
+class MyThread2 extends Thread {
+    public void run() {
+        int n = 0;
+        while (!isInterrupted()) {
+            n ++;
+
+//            没中断线程需要手动设置退出
+//            if (n > 10) {
+//                break;
+//            }
+
+            // 睡眠300毫秒
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                break;
+            }
+
+            System.out.println(n + " hello!");
+        }
+    }
+}
+class MyThread3 extends Thread {
+    public void run() {
+        Thread hello = new HelloThread();
+        hello.start();            // 启动hello线程
+        try {
+            hello.join();         // 等待hello线程结束
+        } catch (InterruptedException e) {
+            System.out.println("interrupted!");
+        }
+        hello.interrupt();
+    }
+}
+class HelloThread extends Thread {
+    public void run() {
+        int n = 0;
+        while (!isInterrupted()) {
+            n++;
+            System.out.println(n + " hello!");
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
     }
 }
