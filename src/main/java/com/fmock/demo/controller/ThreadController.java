@@ -2,6 +2,8 @@ package com.fmock.demo.controller;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 /**
  * @Author zhenhuaixiu
  * @Date 2022/5/18 11:03
@@ -57,7 +59,7 @@ public class ThreadController {
      * 执行顺序
      * 线程调度由操作系统决定，程序本身无法决定调度顺序
      * main就是主线程，如果main方法结束，主线程也就结束了
-     * 想保证线程全部执行，必须保证main仍在执行
+     * 想保证线程全部执行，必须保证main仍在执行 （20220621修正：其实不会退出的，跟go不一样，只是@Test里最终调用了exit，导致退出，不然仍然会继续执行其他线程）
      *
      * Thread.sleep()对当前线程休眠，当前线程!
      */
@@ -82,9 +84,10 @@ public class ThreadController {
         });
         t1.start();
 
-        // 要比t1线程晚结束才能完全执行，否则可能导致t1线程没执行完就退出了（main执行结束）
-        // Thread.sleep(20);
-        Thread.sleep(2000);
+
+        // 要比t1线程晚结束才能完全执行，否则可能导致t1线程没执行完就退出了（main执行结束）（20220621修正：其实不会退出的，跟go不一样，只是@Test里最终调用了exit，导致退出，不然仍然会继续执行其他线程）
+        // 或者join等待 t1.join()
+        Thread.sleep(2000);  // 2000
 
         System.out.println("test2 end...");
     }
@@ -104,7 +107,7 @@ public class ThreadController {
      */
     @Test
     public void test3() throws InterruptedException {
-        Thread t1 = new Thread(() -> {
+        Thread t = new Thread(() -> {
             System.out.println("线程开始");
             try {
                 Thread.sleep(1000);
@@ -113,12 +116,13 @@ public class ThreadController {
             }
             System.out.println("线程结束");
         });
-        t1.start();
+        t.start();
 
         // 一个线程还可以等待另一个线程直到其运行结束
         // join就是指等待该线程结束，然后才继续往下执行自身线程
         // test3线程在启动t1线程后，可以通过t.join()等待t线程结束后再继续运行
-        t1.join();
+        // join(long)的重载方法也可以指定一个等待时间，超过等待时间后就不再继续等待。
+        t.join();
 
         System.out.println("test3 end");
     }
@@ -155,16 +159,7 @@ public class ThreadController {
 
     @Test
     public void test5() throws InterruptedException {
-        Thread t1 = new MyThread2();
-        t1.start();
-
-        Thread.sleep(2000);  // 当前线程睡眠时间越长，打印出的t1.run()越多，睡眠之后才中断
-        t1.interrupt();  // 中断t线程
-        t1.join();       // 等待t线程结束
-        System.out.println("test5 end");
-    }
-    @Test
-    public void test6() throws InterruptedException {
+//        Thread t1 = new MyThread2();
         Thread t1 = new MyThread3();
         t1.start();
 
@@ -172,6 +167,55 @@ public class ThreadController {
         t1.interrupt();  // 中断t线程
         t1.join();       // 等待t线程结束
         System.out.println("test5 end");
+    }
+
+    /**
+     * // 守护线程
+     * // 正常情况下，JAVA程序入口就是JVM启动的main线程，main线程又可以启动其他线程，当【所有】线程都运行结束时，JVM退出，进程结束。
+     * // 但是，有一种线程就是无限循环的，如果他不结束，JVM就无法结束，那么，这种无限循环的线程怎么结束呢？答案就是守护线程。
+     * // 守护线程指为其他线程服务的线程，在JVM中，所有非守护线程执行完毕后，无论有没有守护线程，都会自动退出，以此结束守护线程。
+     * // 因此，JVM退出时，不关心守护线程是否已经结束。
+     * //
+     * // 注意：守护线程不能持有任何需要关闭的资源，比如打开文件，因为虚拟机退出时，守护线程没机会关闭文件，这会导致数据丢失
+     */
+    @Test
+    public void test6() {
+        Thread t = new TimerThread();
+        t.setDaemon(true);  // 如何创建守护线程呢？方法和普通线程一样，只是在调用start()方法前，调用setDaemon(true)把该线程标记为守护线程
+        t.start();
+    }
+}
+
+// 跟go不一样，go的main结束全部结束。
+// java的main会等所有线程结束才退出jvm。除非那个被设置了守护线程，即不再被等待，当main结束，jvm就退出
+class ThreadTest {
+    /**
+     * Java程序入口就是由JVM启动main线程，main线程又可以启动其他线程。当所有线程都运行结束时，JVM退出，进程结束。
+     *
+     * 守护线程
+     * 设置t1为守护线程，即不再被等待，当main结束，jvm就退出
+     */
+    public static void main(String[] args) throws InterruptedException {
+        System.out.println("main start");
+
+        Thread t1 = new Thread(() -> {
+            System.out.println("t1 start");
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("t1 end");
+        });
+
+        t1.setDaemon(true);   // 设置t1为守护进程，即不再被等待，当main结束，jvm就退出。  `ti end 打不出来`
+        t1.start();
+
+        // t1.join();
+        // Thread.sleep(2000);
+
+        System.out.println("main end");
     }
 }
 
@@ -242,6 +286,26 @@ class HelloThread extends Thread {
             System.out.println(n + " hello!");
             try {
                 Thread.sleep(300);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+}
+
+
+
+// 守护线程示例
+// 一个无线循环的线程，一般要在start之前设置为守护线程（达到自动关闭的功能，而不是守护好不让他结束）
+//
+// 实际的意思是把一个线程标记为“守护线程”，就是当他是一个“后台线程”or“内部线程”，类似于管理内存垃圾回收的线程一样。
+// 只要正常线程执行结束了，我主线程才不管你是不是在垃圾回收还是做哪些后台操作，只要正常线程结束，我JVM就结束了。
+class TimerThread extends Thread {
+    public void run() {
+        while (true) {
+            System.out.println(LocalDateTime.now());
+            try {
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 break;
             }
