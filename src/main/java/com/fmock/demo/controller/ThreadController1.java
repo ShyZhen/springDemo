@@ -74,7 +74,7 @@ class AddThread extends Thread {
         for (int i =0; i<10000; i++) {
             synchronized(Counter.lock) {  // 获取锁
                 Counter.count += 1;
-            }  // 释放锁
+            }                             // 释放锁
         }
     }
 }

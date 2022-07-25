@@ -132,3 +132,80 @@ class DecTeacherThread extends Thread {
         }
     }
 }
+
+
+/**
+ * 线程安全
+ */
+// 从上面我们可以知道，java依靠synchronized对线程进行同步，锁住的是哪个对象非常重要，一般同一个变量使用同一个锁即可
+// 让线程自己选择锁住的对象，往往会使得代码逻辑混乱，也不利于封装。更好的方法是把synchronized逻辑封装起来。
+class CounterObj {
+    private int count = 0;
+
+    public void add(int n) {
+        synchronized (this) {
+            this.count += n;
+        }
+    }
+
+    public void dec(int n) {
+        synchronized (this) {
+            this.count -= n;
+        }
+    }
+
+    // 读一个int变量不需要同步
+    public int get() {
+        return this.count;
+    }
+
+    // 当我们锁住的是this实例时，实际上可以使用synchronized修饰方法，add和add2两种写法是等价的
+    // 因此，用synchronized修饰的方法就是同步方法，表示整个方法必须用this实例加锁
+    public synchronized void add2(int n) {
+        this.count += n;
+    }
+
+    // 如果对一个静态方法添加synchronized修饰符，由于没有this实例，针对的是类，
+    // 但是我们注意到任何一个类都有一个由JVM自动创建的Class实例，因此，对static方法添加synchronized，锁住的是该类的Class实例
+    public synchronized static void add3(int n) {
+        //...
+    }
+
+}
+
+/**
+ * 线程安全：如果一个类被设计为允许多线程正确访问，我们就说这个类是“线程安全”的，上面的CounterObj类就是线程安全的。
+ * java标准库的java.lang.StringBuffer也是线程安全的，有一些不变类，例如String,Integer,localDate，他们的所有成员变量都是final，多线程同时访问能读不能写，这些不变类也是安全的。
+ * 最后，类似Math这些只提供静态方法，没有成员变量，也是线程安全的。
+ *
+ * 除了上述几种少数情况，大部分类，例如ArrayList，都是非线程安全的，我们不能在多线程中修改他们。
+ * 但是，如果所有线程都只读取，不写入，那么也可以安全的在线程中共享。
+ *
+ * 没有特殊说明时，一个类默认是非线程安全的。
+ */
+class test {
+    public static void main(String[] args) throws InterruptedException {
+        CounterObj c1 = new CounterObj();
+        //CounterObj c2 = new CounterObj();
+
+
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i<10000; i++) {
+                c1.add(1);
+            }
+        });
+        t1.start();
+
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i<10000; i++) {
+                c1.dec(1);
+            }
+        });
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println(c1.get());
+    }
+}
