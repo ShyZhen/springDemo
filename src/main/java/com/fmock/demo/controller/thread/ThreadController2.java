@@ -1,6 +1,4 @@
-package com.fmock.demo.controller;
-
-import java.util.List;
+package com.fmock.demo.controller.thread;
 
 /**
  * @Author zhenhuaixiu

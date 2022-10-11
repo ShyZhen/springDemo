@@ -1,4 +1,4 @@
-package com.fmock.demo.controller;
+package com.fmock.demo.controller.thread;
 
 /**
  * @Author zhenhuaixiu
