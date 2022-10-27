@@ -14,7 +14,7 @@
     <name>demo</name>
     <description>demo</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -73,6 +73,20 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/src/main/resources/lib/bcprov-jdk18on-171.jar</systemPath>
         </dependency>
+
+        <!--    引入一个log包    -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>2.19.0</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
