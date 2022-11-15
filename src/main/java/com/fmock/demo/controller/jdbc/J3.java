@@ -121,7 +121,7 @@ public class J3 {
     // <dependency>
     //    <groupId>com.zaxxer</groupId>
     //    <artifactId>HikariCP</artifactId>
-    //    <version>5.0.1</version>
+    //    <version>4.0.3</version>
     //    <type>bundle</type>
     // </dependency>
 
