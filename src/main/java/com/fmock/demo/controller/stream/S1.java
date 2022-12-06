@@ -40,7 +40,7 @@ public class S1 {
 }
 
 
-class S2 {
+class S1_2 {
     // 创建Stream
 
     // 方法一：使用Stream.of()
