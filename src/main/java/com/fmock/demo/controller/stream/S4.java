@@ -2,9 +2,11 @@ package com.fmock.demo.controller.stream;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -53,4 +55,87 @@ public class S4 {
 //        cc---3
 //        dd---4
     }
+
+
+    // 我们把Stream提供的操作分为两类，转换操作和聚合操作。
+    @Test
+    public void func3() {
+
+        // 排序，sorted()方法    注意sorted()只是一个转换操作，它会返回一个新的Stream
+        List<String> list = List.of("aaa", "vv", "ss", "eee")
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
+        System.out.println(list);
+
+
+
+
+        // 去重, distinct()
+        List<String> list2 = List.of("aaa", "vv", "ss", "aaa", "ss", "aa")
+                .stream()
+                .distinct()
+                .collect(Collectors.toList());
+        System.out.println(list2);
+
+
+
+        // 截取    skip()用于跳过当前Stream的前N个元素，limit()用于截取当前Stream最多前N个元素
+        List.of("A", "B", "C", "D", "E", "F")
+                .stream()
+                .skip(2)  // 跳过A, B
+                .limit(3) // 截取C, D, E
+                .collect(Collectors.toList()); // [C, D, E]
+
+
+
+
+        // 合并    使用Stream的静态方法concat()
+        Stream<String> s1 = List.of("A", "B", "C").stream();
+        Stream<String> s2 = List.of("D", "E").stream();
+        Stream<String> s = Stream.concat(s1, s2);
+        System.out.println(s.collect(Collectors.toList())); // [A, B, C, D, E]
+
+
+
+
+        // flatMap
+        Stream<List<Integer>> sl = Stream.of(
+                Arrays.asList(1, 2, 3),
+                Arrays.asList(4, 5, 6),
+                Arrays.asList(7, 8, 9));
+        // 这里是stream<List>，我们想脱一层结构，即变成Stream<Integer>,就可以使用flatMap()
+        Stream<Integer> si = sl.flatMap(listtt -> listtt.stream());
+        si.forEach(System.out::println);
+
+
+
+
+        // 其他聚合方法
+        // 除了reduce()和collect()外，Stream还有一些常用的聚合方法
+        // count()：用于返回元素个数；
+        // max(Comparator<? super T> cp)：找出最大元素；
+        // min(Comparator<? super T> cp)：找出最小元素。
+        //System.out.println(si.count());
+
+        // 最后一个常用的方法是forEach()，它可以循环处理Stream的每个元素，我们经常传入System.out::println来打印Stream的元素：
+        //
+        Stream<String> ss = Stream.of("aaa","vvv","aasdf");
+        ss.forEach(str -> {
+            System.out.println("Hello, " + str);
+        });
+    }
+
+    // 小结
+    // Stream提供的常用操作有：
+    //
+    // 转换操作：map()，filter()，sorted()，distinct()；
+    //
+    // 合并操作：concat()，flatMap()；
+    //
+    // 并行处理：parallel()；
+    //
+    // 聚合操作：reduce()，collect()，count()，max()，min()，sum()，average()；
+    //
+    // 其他操作：allMatch(), anyMatch(), forEach()。
 }
